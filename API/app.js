@@ -2,14 +2,7 @@ const http = require('http');
 
 const route = require('./routes/users');
 
-async function editUser(req, res){
-    const {url} = req;
 
-    console.log(url);
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.write(JSON.stringify({ message: "HELLO WORlD" }));
-    res.end();
-}
 
 const server = http.createServer((req, res) => {
     const { url, method } = req;
@@ -42,11 +35,7 @@ const server = http.createServer((req, res) => {
                 res.end();
             }
             break;
-        case 'PUT':
-            if(url.startsWith('/user')){
-                editUser(req, res);
-            }
-            break;
+
         default:
             res.writeHead(404, { "Content-Type": "text/plain" });
             res.write("404 Not Found");
