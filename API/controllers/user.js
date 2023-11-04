@@ -29,7 +29,7 @@ const getUserId = async (req, res) => {
     } catch (err) {
         handleServerError(res, err);
     }
-}
+};
 
 const createUser = async (req, res) => {
     try {

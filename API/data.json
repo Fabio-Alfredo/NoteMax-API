@@ -1,50 +1,9 @@
 [
   {
-    "id": "1",
-    "name": "user 1",
-    "email": "a",
-    "rol": "admin"
-  },
-  {
-    "id": "2",
-    "name": "user 1",
-    "email": "b",
-    "rol": "admin"
-  },
-  {
-    "id": "3",
-    "name": "user 1",
-    "email": "d",
-    "rol": "user"
-  },
-  {
-    "id": "0",
-    "name": "user 1",
-    "email": "j",
+    "id": "300",
+    "name": "user 400",
+    "password": "hello baby",
+    "email": "aljfdfoassffoa",
     "role": "admin"
-  },
-  {
-    "id": "10",
-    "name": "user 1",
-    "email": "l",
-    "role": "admin"
-  },
-  {
-    "id": "11",
-    "name": "user 11",
-    "email": "fhia",
-    "role": "user"
-  },
-  {
-    "id": "21",
-    "name": "user 11",
-    "email": "fhisa",
-    "role": "user"
-  },
-  {
-    "id": "20",
-    "name": "user 11",
-    "email": "fhsdisa",
-    "role": "user"
   }
 ]

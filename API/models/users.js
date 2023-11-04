@@ -10,6 +10,10 @@ const userScheme =
         type: String,
         required: true
     },
+    password:{
+        type:String,
+        required: true
+    },
     email: {
         type: String,
         unique: true,
@@ -17,7 +21,7 @@ const userScheme =
     },
     role: {
         type: String,
-        enum: ["user", "admin", "megaAdmin"],
+        enum: ["user", "admin", "superadmin"],
         required: true
     }
 }

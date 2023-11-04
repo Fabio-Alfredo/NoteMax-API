@@ -1,24 +1,29 @@
 const http = require('http');
 
-const route = require('./routes/users');
+const routeUser = require('./routes/users');
+const ruteNotes = require('./routes/notes');
 
 
 
 const server = http.createServer((req, res) => {
+
     const { url, method } = req;
 
     switch (method) {
-        case "GET":
+        case 'GET':
             if (url === "/") {
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.write(JSON.stringify({ message: "HELLO WORlD" }));
                 res.end();
             }
             else if (url === "/users") {
-                route.usersRoute(req, res);
+                routeUser.usersRoute(req, res);
             }
             else if (url.startsWith('/user')) {
-                route.usersIdRoute(req, res);
+                routeUser.usersIdRoute(req, res);
+            }
+            else if(url.startsWith('/notes')){
+                ruteNotes.NotesRoute(req, res);
             }
             else {
                 res.writeHead(404, { "Content-Type": "text/plain" });
@@ -28,7 +33,7 @@ const server = http.createServer((req, res) => {
             break;
         case 'POST':
             if (url === '/user') {
-                route.createUserRoute(req, res);
+                routeUser.createUserRoute(req, res);
             }else {
                 res.writeHead(404, { "Content-Type": "text/plain" });
                 res.write("404 Not Found");
