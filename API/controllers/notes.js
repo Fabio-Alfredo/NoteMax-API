@@ -47,8 +47,10 @@ const getNotes = async (req, res) => {
 
 const getNotesUser = async (req, res) => {
     try {
-        const urlObj = url.parse(req.url, true);
-        const userId = urlObj.query.user_id;
+        /*const urlObj = url.parse(req.url, true);
+        const userId = urlObj.query.user_id;*/
+        const userId = req.user.id
+
 
         const userExists = await userExistsWithId(userId);
 
@@ -74,7 +76,8 @@ const getNotesUser = async (req, res) => {
 const getNotesType = async (req, res) => {
     try {
         const urlObj = url.parse(req.url, true);
-        const userId = urlObj.query.user_id;
+        //const userId = urlObj.query.user_id;
+        const userId = req.user.id;
         const category = urlObj.query.category;
 
         const validCategories = ['draft', 'math', 'social', 'friends'];
@@ -90,10 +93,6 @@ const getNotesType = async (req, res) => {
             sendResponse(res, 404, 'text/plain', 'El usuario  no existe');
             return;
         }
-
-        console.log("userId:", userId);
-        console.log("category:", category);
-
 
         const sql = 'SELECT * FROM notes WHERE user_id = ? AND categories = ?';
         const values = [userId, category];

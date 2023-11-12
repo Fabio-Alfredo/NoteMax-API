@@ -6,6 +6,35 @@ const query = util.promisify(db.query).bind(db);
 const { bodyParser } = require('../lib/bodyParse');
 const { validateUser } = require('../models/users');
 
+const jwt = require('jsonwebtoken');
+const secretKey = 'fabioalfredo';
+
+const authenticateUser = async (req, res) => {
+    try {
+        await bodyParser(req);
+        const password = req.body.password;
+        const username = req.body.name;
+
+
+        const sql = 'SELECT id, name, role FROM users WHERE name = ? AND password = ? LIMIT 1';
+        const user = (await query(sql, [username, password]))[0];
+        console.log(user);
+
+        if (user) {
+            const token = jwt.sign({ id: user.id, name: user.name, role: user.role }, secretKey, { expiresIn: '1h' });
+            console.log(user.id);
+            console.log(token);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ token: token }));
+        } else {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ message: 'Authentication failed' }));
+        }
+    } catch (err) {
+        throw err;
+    }
+};
+
 
 
 const getUsers = async (req, res) => {
@@ -13,6 +42,7 @@ const getUsers = async (req, res) => {
     try {
         const sql = 'SELECT * FROM users';
         const results = await query(sql);
+        //console.log(results);
         const jsonData = JSON.stringify(results);
         sendResponse(res, 200, 'application/json', jsonData);
     } catch (err) {
@@ -54,7 +84,8 @@ const getUserId = async (req, res) => {
         const urlObj = url.parse(req.url, true);
         const userId = urlObj.query.id;
 
-        const sql = `SELECT * FROM users WHERE id = ?`;
+
+        const sql = 'SELECT * FROM users WHERE id = ? ';
         const result = await query(sql, [userId]);
 
         if (result.length > 0) {
@@ -129,4 +160,4 @@ const handleServerError = (res, error) => {
     sendResponse(res, 500, 'text/plain', 'Error interno del servidor');
 }
 
-module.exports = { getUsers, getUserId, createUser, changeUserRole };
+module.exports = { getUsers, getUserId, createUser, changeUserRole, authenticateUser };

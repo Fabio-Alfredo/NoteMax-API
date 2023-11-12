@@ -1,12 +1,40 @@
 const http = require('http');
 
 const routeUser = require('./routes/users');
-const routeNotes = require('./routes/notes')
+const routeNotes = require('./routes/notes');
+
+const jwt = require('jsonwebtoken');
+const secretKey = 'fabioalfredo';
+
 
 
 const server = http.createServer((req, res) => {
 
     const { url, method } = req;
+
+    const verificarToken = (req, res, next) => {
+        let token = req.headers.authorization;
+    
+        if (!token) {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ message: 'Token no proporcionado' }));
+        } else {
+            if (token.startsWith('Bearer')) {
+                token = token.slice(7); 
+            }
+    
+            jwt.verify(token, secretKey, (err, decoded) => {
+                if (err) {
+                    res.writeHead(401, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ message: 'Token inválido' }));
+                } else {
+                    req.user = decoded;
+                    next();
+                }
+            });
+        }
+    };
+    
 
     switch (method) {
         case 'GET':
@@ -16,19 +44,29 @@ const server = http.createServer((req, res) => {
                 res.end();
             }
             else if (url === '/api/users') {
-                routeUser.usersRoute(req, res);
+                verificarToken(req, res, () => {
+                    adminSuperadmin(req, res, routeUser.usersRoute);
+                });
             }
             else if (url.startsWith('/api/users?')) {
-                routeUser.usersIdRoute(req, res);
+                verificarToken(req, res, ()=>{
+                    adminSuperadmin(req, res, routeUser.usersIdRoute)
+                });
             }
-            else if (url.startsWith('/api/notess?')) {
-                routeNotes.getNotesUserRoute(req, res);
+            else if (url === ('/api/notess')) {
+                verificarToken(req, res, ()=>{
+                    usersRoles(req, res, routeNotes.getNotesUserRoute)
+                });
             }
             else if (url === '/api/notes') {
-                routeNotes.getNotesRoute(req, res);
+                verificarToken(req, res, ()=>{
+                    adminSuperadmin(req, res, routeNotes.getDeleteNoteRoute)
+                });
             }
             else if (url.startsWith('/api/notes?')) {
-                routeNotes.getNotesTypeRoute(req, res);
+                verificarToken(req, res, ()=>{
+                    usersRoles(req, res, routeNotes.getNotesTypeRoute)
+                });
             }
             else {
                 res.writeHead(404, { "Content-Type": "text/plain" });
@@ -41,7 +79,12 @@ const server = http.createServer((req, res) => {
                 routeUser.createUserRoute(req, res);
             }
             else if (url.startsWith('/api/notes')) {
-                routeNotes.createNoteRoute(req, res);
+                verificarToken(req, res, ()=>{
+                    usersRoles(req, res, routeNotes.createNoteRoute)
+                });
+            }
+            else if (url === '/api/login') {
+                routeUser.loginRoute(req, res);
             }
             else {
                 res.writeHead(404, { "Content-Type": "text/plain" });
@@ -51,7 +94,9 @@ const server = http.createServer((req, res) => {
             break;
         case 'DELETE':
             if (url.startsWith('/api/notes')) {
-                routeNotes.getDeleteNoteRoute(req, res);
+                verificarToken(req, res, ()=>{
+                    usersRoles(req, res, routeNotes.getDeleteNoteRoute)
+                });
             }
             else {
                 res.writeHead(404, { "Content-Type": "text/plain" });
@@ -61,7 +106,9 @@ const server = http.createServer((req, res) => {
             break
         case 'PATCH':
             if (url.startsWith('/api/users')) {
-                routeUser.editUserRout(req, res);
+                verificarToken(req, res, ()=>{
+                    Superadmin(req, res, routeUser.editUserRout)
+                });
             } else {
                 res.writeHead(404, { "Content-Type": "text/plain" });
                 res.write("404 Not Found");
@@ -75,6 +122,34 @@ const server = http.createServer((req, res) => {
             break;
     }
 });
+
+const adminSuperadmin=(req, res, routeFunction)=>{
+    if(req.user.role === "user"){
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Acceso prohibido para usuarios con rol "usuario"' }));
+    }else{
+        routeFunction(req, res);
+    }
+};
+
+const Superadmin=(req, res, routeFunction)=>{
+    if(req.user.role === "superadmin"){
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Acceso prohibido para usuarios con rol "usuario"' }));
+    }else{
+        routeFunction(req, res);
+    }
+};
+
+
+const usersRoles=(req, res, routeFunction)=>{
+    if(req.user.role === "user"){
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Acceso prohibido para usuarios con rol "usuario"' }));
+    }else{
+        routeFunction(req, res);
+    }
+}
 
 const port = 4000;
 

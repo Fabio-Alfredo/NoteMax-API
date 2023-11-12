@@ -13,10 +13,18 @@ const usersRoute = (req, res) => {
     }
 };
 
-const editUserRout=(req, res)=>{
-    if(req.method === "PATCH"){
+const editUserRout = (req, res) => {
+    if (req.method === "PATCH") {
         usersController.changeUserRole(req, res);
-    }else{
+    } else {
+        handleMethodNotAllowed(req, res);
+    }
+};
+
+const loginRoute = (req, res) => {
+    if (req.method === "POST") {
+        usersController.authenticateUser(req, res);
+    } else {
         handleMethodNotAllowed(req, res);
     }
 }
@@ -38,4 +46,4 @@ const createUserRoute = (req, res) => {
 }
 
 
-module.exports = { usersRoute, usersIdRoute, createUserRoute, editUserRout };
+module.exports = { usersRoute, usersIdRoute, createUserRoute, editUserRout, loginRoute};
