@@ -2,7 +2,7 @@
 const userScheme =
 {
     id: {
-        type: String,
+        type: Number,
         unique: true,
         required: true
     },
@@ -21,7 +21,7 @@ const userScheme =
     },
     role: {
         type: String,
-        enum: ["user", "admin", "superadmin"],
+        enum: ['user', 'admin', 'superadmin'],
         required: true
     }
 }
@@ -33,15 +33,15 @@ const validateUser = (newUser, existingUsers) => {
         }
     }
 
-    if (existingUsers.some(user => user.id === newUser.id)) {
+    if (existingUsers && existingUsers.some(user => user.id === newUser.id)) {
         return { isValid: false, error: 'El campo "id" debe ser único.' };
     }
 
-    if (existingUsers.some(user => user.email === newUser.email)) {
+    else if (existingUsers && existingUsers.some(user => user.email === newUser.email)) {
         return { isValid: false, error: 'El campo "email" debe ser único.' };
     }
 
-    if (userScheme.role && newUser.role && !userScheme.role.enum.includes(newUser.role)) {
+    else if (userScheme.role && newUser.role && !userScheme.role.enum.includes(newUser.role)) {
         return { isValid: false, error: 'El campo "role" no es válido.' };
     }
 

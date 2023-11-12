@@ -1,8 +1,7 @@
 const http = require('http');
 
 const routeUser = require('./routes/users');
-const ruteNotes = require('./routes/notes');
-
+const routeNotes = require('./routes/notes')
 
 
 const server = http.createServer((req, res) => {
@@ -16,14 +15,20 @@ const server = http.createServer((req, res) => {
                 res.write(JSON.stringify({ message: "HELLO WORlD" }));
                 res.end();
             }
-            else if (url === "/users") {
+            else if (url === '/api/users') {
                 routeUser.usersRoute(req, res);
             }
-            else if (url.startsWith('/user')) {
+            else if (url.startsWith('/api/users?')) {
                 routeUser.usersIdRoute(req, res);
             }
-            else if(url.startsWith('/notes')){
-                ruteNotes.NotesRoute(req, res);
+            else if (url.startsWith('/api/notess?')) {
+                routeNotes.getNotesUserRoute(req, res);
+            }
+            else if (url === '/api/notes') {
+                routeNotes.getNotesRoute(req, res);
+            }
+            else if (url.startsWith('/api/notes?')) {
+                routeNotes.getNotesTypeRoute(req, res);
             }
             else {
                 res.writeHead(404, { "Content-Type": "text/plain" });
@@ -32,25 +37,47 @@ const server = http.createServer((req, res) => {
             }
             break;
         case 'POST':
-            if (url === '/user') {
+            if (url.startsWith('/api/users')) {
                 routeUser.createUserRoute(req, res);
-            }else {
+            }
+            else if (url.startsWith('/api/notes')) {
+                routeNotes.createNoteRoute(req, res);
+            }
+            else {
                 res.writeHead(404, { "Content-Type": "text/plain" });
                 res.write("404 Not Found");
                 res.end();
             }
             break;
-
+        case 'DELETE':
+            if (url.startsWith('/api/notes')) {
+                routeNotes.getDeleteNoteRoute(req, res);
+            }
+            else {
+                res.writeHead(404, { "Content-Type": "text/plain" });
+                res.write("404 Not Found");
+                res.end();
+            }
+            break
+        case 'PATCH':
+            if (url.startsWith('/api/users')) {
+                routeUser.editUserRout(req, res);
+            } else {
+                res.writeHead(404, { "Content-Type": "text/plain" });
+                res.write("404 Not Found");
+                res.end();
+            }
+            break;
         default:
             res.writeHead(404, { "Content-Type": "text/plain" });
             res.write("404 Not Found");
             res.end();
             break;
     }
-})
+});
 
-const port = 3000;
+const port = 4000;
 
 server.listen(port, () => {
     console.log(`El servidor esta corriendo en el puerto ${port}`)
-})
+});

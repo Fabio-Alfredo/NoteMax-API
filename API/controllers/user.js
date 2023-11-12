@@ -1,28 +1,64 @@
-const fs = require('fs').promises;
+
+const db = require('../conecction/mysql');
+const url = require('url');
+const util = require('util');
+const query = util.promisify(db.query).bind(db);
 const { bodyParser } = require('../lib/bodyParse');
 const { validateUser } = require('../models/users');
 
+
+
 const getUsers = async (req, res) => {
+
     try {
-        const data = await fs.readFile('data.json', 'utf8');
-        sendResponse(res, 200, 'application/json', data);
+        const sql = 'SELECT * FROM users';
+        const results = await query(sql);
+        const jsonData = JSON.stringify(results);
+        sendResponse(res, 200, 'application/json', jsonData);
     } catch (err) {
         handleServerError(res, err);
     }
-}
+};
+
+const changeUserRole = async (req, res) => {
+    try {
+        const parts = req.url.split('/');
+        const userId = parts[3];
+
+        await bodyParser(req);
+        if (Object.keys(req.body).length !== 1 || !req.body.hasOwnProperty('role')) {
+            sendResponse(res, 400, 'text/plain', 'La solicitud debe contener solo la propiedad "role"');
+            return;
+        }
+
+        const newRole = req.body.role;
+
+        const checkUserExistenceSQL = `SELECT * FROM users WHERE id = ?`;
+        const existingUser = await query(checkUserExistenceSQL, [userId]);
+
+        if (existingUser.length === 0) {
+            sendResponse(res, 404, 'text/plain', 'El usuario no existe');
+        } else {
+            const updateRoleSQL = `UPDATE users SET role = ? WHERE id = ?`;
+            await query(updateRoleSQL, [newRole, userId]);
+
+            sendResponse(res, 200, 'text/plain', 'El rol del usuario ha sido cambiado exitosamente');
+        }
+    } catch (err) {
+        handleServerError(res, err);
+    }
+};
 
 const getUserId = async (req, res) => {
     try {
-        const parts = req.url.split('/');
-        const userId = parts[2];
+        const urlObj = url.parse(req.url, true);
+        const userId = urlObj.query.id;
 
-        const data = await fs.readFile('data.json', 'utf8');
-        const users = JSON.parse(data);
+        const sql = `SELECT * FROM users WHERE id = ?`;
+        const result = await query(sql, [userId]);
 
-        const user = users.find(user => user.id == userId);
-
-        if (user) {
-            sendResponse(res, 200, 'application/json', JSON.stringify(user));
+        if (result.length > 0) {
+            sendResponse(res, 200, 'application/json', JSON.stringify(result));
         } else {
             sendResponse(res, 404, 'text/plain', 'Usuario no encontrado');
         }
@@ -31,37 +67,66 @@ const getUserId = async (req, res) => {
     }
 };
 
+//validacion de usuario existente para crear uno nuevo
+const getUsersExiting = async (req, res) => {
+
+    try {
+        const sql = 'SELECT * FROM users';
+        const results = await query(sql);
+        return results;
+    } catch (err) {
+        handleServerError(res, err);
+    }
+};
+
+
+
+
 const createUser = async (req, res) => {
     try {
         await bodyParser(req);
         const newUser = req.body;
 
-        const data = await fs.readFile('data.json', 'utf8');
-        const users = JSON.parse(data);
 
-        const validationResult = await validateUser(newUser, users);
+        const existingUsers = await getUsersExiting(req, res);
+        const validationResult = validateUser(newUser, existingUsers);
         if (!validationResult.isValid) {
             sendResponse(res, 400, 'application/json', JSON.stringify({ error: validationResult.error }));
             return;
         }
 
-        users.push(newUser);
-        await fs.writeFile('data.json', JSON.stringify(users, null, 2), 'utf8');
+        const query = 'INSERT INTO users (id, name, password, email, role) VALUES (?, ?, ?, ?, ?)';
 
-        sendResponse(res, 200, 'text/plain', 'Recibido');
+        const values = [
+            newUser.id,
+            newUser.name,
+            newUser.password,
+            newUser.email,
+            newUser.role
+        ];
+
+        db.query(query, values, (err, result) => {
+            if (err) {
+                handleServerError(res, err);
+            } else {
+                sendResponse(res, 200, 'text/plain', 'Usuario creado exitosamente');
+            }
+        });
+
     } catch (err) {
         handleServerError(req, err);
     }
-}
+};
 
 const sendResponse = (res, status, contentType, body) => {
     res.writeHead(status, { 'Content-Type': contentType });
     res.end(body);
 }
 
+
 const handleServerError = (res, error) => {
     console.error(error);
     sendResponse(res, 500, 'text/plain', 'Error interno del servidor');
 }
 
-module.exports = { getUsers, getUserId, createUser };
+module.exports = { getUsers, getUserId, createUser, changeUserRole };

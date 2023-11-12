@@ -13,6 +13,14 @@ const usersRoute = (req, res) => {
     }
 };
 
+const editUserRout=(req, res)=>{
+    if(req.method === "PATCH"){
+        usersController.changeUserRole(req, res);
+    }else{
+        handleMethodNotAllowed(req, res);
+    }
+}
+
 const usersIdRoute = (req, res) => {
     if (req.method === "GET") {
         usersController.getUserId(req, res);
@@ -22,7 +30,7 @@ const usersIdRoute = (req, res) => {
 };
 
 const createUserRoute = (req, res) => {
-    if (req.method === 'POST') {
+    if (req.method === "POST") {
         usersController.createUser(req, res);
     } else {
         handleMethodNotAllowed(req, res);
@@ -30,4 +38,4 @@ const createUserRoute = (req, res) => {
 }
 
 
-module.exports = { usersRoute, usersIdRoute, createUserRoute };
+module.exports = { usersRoute, usersIdRoute, createUserRoute, editUserRout };
