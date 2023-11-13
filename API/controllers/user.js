@@ -1,5 +1,7 @@
 
 const db = require('../conecction/mysql');
+const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const url = require('url');
 const util = require('util');
 const query = util.promisify(db.query).bind(db);
@@ -7,28 +9,37 @@ const { bodyParser } = require('../lib/bodyParse');
 const { validateUser } = require('../models/users');
 
 const jwt = require('jsonwebtoken');
+//para token
 const secretKey = 'fabioalfredo';
+
+//para encriptado
+const claveSecret = 'fabiohernandex'
 
 const authenticateUser = async (req, res) => {
     try {
         await bodyParser(req);
-        const password = req.body.password;
+        const plainTextPassword = req.body.password;
         const username = req.body.name;
 
 
-        const sql = 'SELECT id, name, role FROM users WHERE name = ? AND password = ? LIMIT 1';
-        const user = (await query(sql, [username, password]))[0];
-        console.log(user);
+        const sql = 'SELECT id, name, role, password FROM users WHERE name = ? LIMIT 1';
+        const user = (await query(sql, [username]))[0];
 
         if (user) {
-            const token = jwt.sign({ id: user.id, name: user.name, role: user.role }, secretKey, { expiresIn: '1h' });
-            console.log(user.id);
-            console.log(token);
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ token: token }));
+            // Compara la contraseña proporcionada con la contraseña almacenada en la base de datos
+            const passwordMatch = await bcrypt.compare(plainTextPassword, user.password);
+
+            if (passwordMatch) {
+                const token = jwt.sign({ id: user.id, name: user.name, role: user.role }, secretKey, { expiresIn: '1h' });
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ token: token }));
+            } else {
+                res.writeHead(401, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ message: 'Authentication failed' }));
+            }
         } else {
             res.writeHead(401, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ message: 'Authentication failed' }));
+            res.end(JSON.stringify({ message: 'User not found' }));
         }
     } catch (err) {
         throw err;
@@ -42,8 +53,15 @@ const getUsers = async (req, res) => {
     try {
         const sql = 'SELECT * FROM users';
         const results = await query(sql);
+
+        const resultsWithDecryptedEmail = results.map(user => {
+            const encryptedEmail = user.email;
+            const decryptedEmail = decryptData(encryptedEmail, claveSecret);
+            return { ...user, email: decryptedEmail };
+        });
+
         //console.log(results);
-        const jsonData = JSON.stringify(results);
+        const jsonData = JSON.stringify(resultsWithDecryptedEmail);
         sendResponse(res, 200, 'application/json', jsonData);
     } catch (err) {
         handleServerError(res, err);
@@ -109,7 +127,10 @@ const getUserId = async (req, res) => {
         const result = await query(sql, [userId]);
 
         if (result.length > 0) {
-            sendResponse(res, 200, 'application/json', JSON.stringify(result));
+            const encryptedEmail = result[0].email;
+            const decryptedEmail = decryptData(encryptedEmail, claveSecret);
+            const userDataWithDecryptedEmail = { ...result[0], email: decryptedEmail };
+            sendResponse(res, 200, 'application/json', JSON.stringify(userDataWithDecryptedEmail));
         } else {
             sendResponse(res, 404, 'text/plain', 'Usuario no encontrado');
         }
@@ -131,8 +152,6 @@ const getUsersExiting = async (req, res) => {
 };
 
 
-
-
 const createUser = async (req, res) => {
     try {
         await bodyParser(req);
@@ -146,13 +165,15 @@ const createUser = async (req, res) => {
             return;
         }
 
+        const encryptedEmail = encryptData(newUser.email, claveSecret);
+        const hashedPassword = await bcrypt.hash(newUser.password, 12);
         const query = 'INSERT INTO users (id, name, password, email, role) VALUES (?, ?, ?, ?, ?)';
 
         const values = [
             newUser.id,
             newUser.name,
-            newUser.password,
-            newUser.email,
+            hashedPassword,
+            encryptedEmail,
             newUser.role
         ];
 
@@ -174,6 +195,19 @@ const sendResponse = (res, status, contentType, body) => {
     res.end(body);
 }
 
+function encryptData(data, secretKey) {
+    const cipher = crypto.createCipher('aes-256-cbc', secretKey);
+    let encryptedData = cipher.update(data, 'utf8', 'hex');
+    encryptedData += cipher.final('hex');
+    return encryptedData;
+};
+
+function decryptData(encryptedData, secretKey) {
+    const decipher = crypto.createDecipher('aes-256-cbc', secretKey);
+    let decryptedData = decipher.update(encryptedData, 'hex', 'utf8');
+    decryptedData += decipher.final('utf8');
+    return decryptedData;
+}
 
 const handleServerError = (res, error) => {
     console.error(error);

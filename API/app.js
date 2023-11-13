@@ -4,11 +4,6 @@ const routeNotes = require('./routes/notes');
 const jwt = require('jsonwebtoken');
 const secretKey = 'fabioalfredo';
 
-
-
-
-
-
 const server = http.createServer((req, res) => {
 
     const { url, method } = req;
@@ -106,7 +101,7 @@ const server = http.createServer((req, res) => {
             break;
         case 'DELETE':
             // ruta para eliminar una nota
-            if (url === '/api/notes') {
+            if (url.startsWith('/api/notes')) {
                 verificarToken(req, res, ()=>{
                     usersRoles(req, res, routeNotes.getDeleteNoteRoute)
                 });
