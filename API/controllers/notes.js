@@ -132,8 +132,9 @@ const createNote = async (req, res) => {
     try {
         await bodyParser(req);
         const newNote = req.body;
+        const userId = req.user.id;
 
-        const userExists = await userExistsWithId(newNote.user_id);
+        const userExists = await userExistsWithId(userId);
 
         if (!userExists) {
             sendResponse(res, 404, 'text/plain', 'El usuario con user_id no existe');
@@ -151,7 +152,7 @@ const createNote = async (req, res) => {
 
         const values = [
             newNote.id,
-            newNote.user_id,
+            userId,
             newNote.tittle,
             newNote.content,
             newNote.categories

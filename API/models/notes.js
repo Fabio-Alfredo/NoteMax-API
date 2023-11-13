@@ -4,11 +4,6 @@ const notesScheme = {
         unique: true,
         required: true
     },
-    user_id:{
-        type: Number,
-        unique: true,
-        required: true
-    },
     tittle:{
         type:String,
         required: true

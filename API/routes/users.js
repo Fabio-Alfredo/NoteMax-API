@@ -13,6 +13,14 @@ const usersRoute = (req, res) => {
     }
 };
 
+const deleteUserRoute=(req, res)=>{
+    if(req.method === "DELETE"){
+        usersController.deleteUser(req, res);
+    }else{
+        handleMethodNotAllowed(req, res);
+    }
+}
+
 const editUserRout = (req, res) => {
     if (req.method === "PATCH") {
         usersController.changeUserRole(req, res);
@@ -46,4 +54,4 @@ const createUserRoute = (req, res) => {
 }
 
 
-module.exports = { usersRoute, usersIdRoute, createUserRoute, editUserRout, loginRoute};
+module.exports = { usersRoute, usersIdRoute, createUserRoute, editUserRout, loginRoute, deleteUserRoute};

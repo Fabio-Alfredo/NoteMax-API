@@ -50,6 +50,26 @@ const getUsers = async (req, res) => {
     }
 };
 
+const deleteUser = async (req, res) => {
+    try {
+        const urlObj = url.parse(req.url, true);
+        const userId = urlObj.query.id;
+
+        const checkUserExistenceSQL = 'SELECT * FROM users WHERE id = ?';
+        const existingUser = await query(checkUserExistenceSQL, [userId]);
+
+        if (existingUser.length === 0) {
+            sendResponse(res, 404, 'text/plain', 'El usuario no existe');
+        } else {
+            const deleteUserSQL = `DELETE FROM users WHERE id = ?`;
+            await query(deleteUserSQL, [userId]);
+            sendResponse(res, 200, 'text/plain', 'El usuario ha sido eliminado exitosamente');
+        }
+    } catch (err) {
+        handleServerError(res, err);
+    }
+};
+
 const changeUserRole = async (req, res) => {
     try {
         const parts = req.url.split('/');
@@ -160,4 +180,4 @@ const handleServerError = (res, error) => {
     sendResponse(res, 500, 'text/plain', 'Error interno del servidor');
 }
 
-module.exports = { getUsers, getUserId, createUser, changeUserRole, authenticateUser };
+module.exports = { getUsers, getUserId, createUser, changeUserRole, authenticateUser, deleteUser };
