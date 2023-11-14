@@ -7,7 +7,8 @@ const { bodyParser } = require('../lib/bodyParse');
 const { validateNotes } = require('../models/notes');
 
 //clave de encriptacion
-const secretKey = 'tu_clave_secreta';
+require('dotenv').config();
+const claveSecret = process.env.CLAVE_ENCRIPTADO;
 
 const createNote = async (req, res) => {
     try {
@@ -31,8 +32,8 @@ const createNote = async (req, res) => {
 
 
         // Encripta el título y el contenido
-        const encryptedTitle = encryptData(newNote.tittle, secretKey);
-        const encryptedContent = encryptData(newNote.content, secretKey);
+        const encryptedTitle = encryptData(newNote.tittle, claveSecret);
+        const encryptedContent = encryptData(newNote.content, claveSecret);
 
         const query = 'INSERT INTO notes (id, user_id, tittle, content, categories) VALUES (?, ?, ?, ?, ?)';
 
@@ -88,8 +89,8 @@ const getNotes = async (req, res) => {
         const resultsWithDecryptedData = result.map(note => {
             const encryptedTitle = note.tittle;
             const encryptedContent = note.content;
-            const decryptedTitle = decryptData(encryptedTitle, secretKey);
-            const decryptedContent = decryptData(encryptedContent, secretKey);
+            const decryptedTitle = decryptData(encryptedTitle, claveSecret);
+            const decryptedContent = decryptData(encryptedContent, claveSecret);
             return { ...note, tittle: decryptedTitle, content: decryptedContent };
         });
 
@@ -124,8 +125,8 @@ const getNotesUser = async (req, res) => {
         const resultsWithDecryptedData = result.map(note => {
             const encryptedTitle = note.tittle;
             const encryptedContent = note.content;
-            const decryptedTitle = decryptData(encryptedTitle, secretKey);
-            const decryptedContent = decryptData(encryptedContent, secretKey);
+            const decryptedTitle = decryptData(encryptedTitle, claveSecret);
+            const decryptedContent = decryptData(encryptedContent, claveSecret);
             return { ...note, tittle: decryptedTitle, content: decryptedContent };
         });
 
@@ -167,8 +168,8 @@ const getNotesType = async (req, res) => {
         const resultsWithDecryptedData = result.map(note => {
             const encryptedTitle = note.tittle;
             const encryptedContent = note.content;
-            const decryptedTitle = decryptData(encryptedTitle, secretKey);
-            const decryptedContent = decryptData(encryptedContent, secretKey);
+            const decryptedTitle = decryptData(encryptedTitle, claveSecret);
+            const decryptedContent = decryptData(encryptedContent, claveSecret);
             return { ...note, tittle: decryptedTitle, content: decryptedContent };
         });
 
@@ -201,15 +202,15 @@ const getNotesExiting = async (req, res) => {
 };
 
 
-function encryptData(data, secretKey) {
-    const cipher = crypto.createCipher('aes-256-cbc', secretKey);
+function encryptData(data, claveSecret) {
+    const cipher = crypto.createCipher('aes-256-cbc', claveSecret);
     let encryptedData = cipher.update(data, 'utf8', 'hex');
     encryptedData += cipher.final('hex');
     return encryptedData;
 }
 
-function decryptData(encryptedData, secretKey) {
-    const decipher = crypto.createDecipher('aes-256-cbc', secretKey);
+function decryptData(encryptedData, claveSecret) {
+    const decipher = crypto.createDecipher('aes-256-cbc', claveSecret);
     let decryptedData = decipher.update(encryptedData, 'hex', 'utf8');
     decryptedData += decipher.final('utf8');
     return decryptedData;

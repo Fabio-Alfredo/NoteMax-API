@@ -8,12 +8,13 @@ const query = util.promisify(db.query).bind(db);
 const { bodyParser } = require('../lib/bodyParse');
 const { validateUser } = require('../models/users');
 
+require('dotenv').config();
 const jwt = require('jsonwebtoken');
 //para token
-const secretKey = 'fabioalfredo';
+const secretKey = process.env.SECRETKEY;
 
 //para encriptado
-const claveSecret = 'fabiohernandex'
+const claveSecret = process.env.CLAVE_ENCRIPTADO;
 
 const authenticateUser = async (req, res) => {
     try {
