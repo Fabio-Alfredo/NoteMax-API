@@ -1,11 +1,7 @@
 
 const userScheme =
 {
-    id: {
-        type: Number,
-        unique: true,
-        required: true
-    },
+
     name: {
         type: String,
         required: true
@@ -33,8 +29,8 @@ const validateUser = (newUser, existingUsers) => {
         }
     }
 
-    if (existingUsers && existingUsers.some(user => user.id === newUser.id)) {
-        return { isValid: false, error: 'El campo "id" debe ser único.' };
+    if (existingUsers && existingUsers.some(user => user.name === newUser.name)) {
+        return { isValid: false, error: 'El campo "name" debe ser único.' };
     }
 
     else if (existingUsers && existingUsers.some(user => user.email === newUser.email)) {

@@ -1,9 +1,4 @@
 const notesScheme = {
-    id:{
-        type: Number,
-        unique: true,
-        required: true
-    },
     tittle:{
         type:String,
         required: true
@@ -25,11 +20,6 @@ const validateNotes = (newNote, existingNotes) => {
         if (notesScheme[key].required && !newNote[key]) {
             return { isValid: false, error: `El campo "${key}" es requerido.` };
         }
-    }
-
-
-    if (existingNotes && existingNotes.some(note => note.id === newNote.id)) {
-        return { isValid: false, error: 'El campo "id" debe ser único.' };
     }
     
 
