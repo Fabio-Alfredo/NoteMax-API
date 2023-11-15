@@ -133,7 +133,7 @@ const getNotesUser = async (req, res) => {
         if (resultsWithDecryptedData.length > 0) {
             sendResponse(res, 200, 'application/json', JSON.stringify(resultsWithDecryptedData));
         } else {
-            sendResponse(res, 404, 'text/plain', 'Sin notas creadas');
+            sendResponse(res, 200, 'application/json', JSON.stringify([]));
         }
     } catch (err) {
         handleServerError(res, err);
