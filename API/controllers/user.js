@@ -20,7 +20,7 @@ const authenticateUser = async (req, res) => {
     try {
         await bodyParser(req);
         const plainTextPassword = req.body.password;
-        const username = req.body.name;
+        const username = req.body.user;
 
 
         const sql = 'SELECT id, name, role, password FROM users WHERE name = ? LIMIT 1';
