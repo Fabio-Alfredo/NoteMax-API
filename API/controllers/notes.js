@@ -116,7 +116,7 @@ const getNotesUser = async (req, res) => {
             return;
         }
 
-        const sql = `SELECT tittle, content, categories, created_at FROM notes WHERE user_id = ?`;
+        const sql = `SELECT id, tittle, content, categories, created_at FROM notes WHERE user_id = ?`;
         const value = [userId];
         const result = await query(sql, value);
 
