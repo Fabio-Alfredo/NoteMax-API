@@ -149,7 +149,7 @@ const adminSuperadmin=(req, res, routeFunction)=>{
 };
 
 const Superadmin=(req, res, routeFunction)=>{
-    if(req.user.role === "superadmin"){
+    if(req.user.role != "superadmin"){
         res.writeHead(403, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ message: 'Acceso prohibido para usuarios con rol "usuario"' }));
     }else{
@@ -159,7 +159,7 @@ const Superadmin=(req, res, routeFunction)=>{
 
 
 const usersRoles=(req, res, routeFunction)=>{
-    if(req.user.role === "user"){
+    if(!req.user.role){
         res.writeHead(403, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ message: 'Acceso prohibido para usuarios con rol "usuario"' }));
     }else{
