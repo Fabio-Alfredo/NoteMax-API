@@ -168,8 +168,9 @@ const createUser = async (req, res) => {
 
 
         const encryptedEmail = encryptData(newUser.email, claveSecret);
+        const encryptedPhone = encryptData(newUser.phone_number, claveSecret);
         const hashedPassword = await bcrypt.hash(newUser.password, 12);
-        const query = 'INSERT INTO users (id, name, password, email, role) VALUES (?, ?, ?, ?, ?)';
+        const query = 'INSERT INTO users (name, user, password, email, phone_number) VALUES (?, ?, ?, ?, ?)';
 
         if (newUser.role === null || newUser.role === undefined) {
             newUser.role = 'user';
@@ -177,11 +178,11 @@ const createUser = async (req, res) => {
 
 
         const values = [
-            newUser.id,
             newUser.name,
+            newUser.user,
             hashedPassword,
             encryptedEmail,
-            newUser.role
+            encryptedPhone
         ];
 
         db.query(query, values, (err, result) => {
