@@ -166,9 +166,15 @@ const createUser = async (req, res) => {
             return;
         }
 
+
         const encryptedEmail = encryptData(newUser.email, claveSecret);
         const hashedPassword = await bcrypt.hash(newUser.password, 12);
         const query = 'INSERT INTO users (id, name, password, email, role) VALUES (?, ?, ?, ?, ?)';
+
+        if (newUser.role === null || newUser.role === undefined) {
+            newUser.role = 'user';
+        }
+
 
         const values = [
             newUser.id,

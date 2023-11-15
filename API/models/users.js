@@ -4,7 +4,8 @@ const userScheme =
 
     name: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
     password:{
         type:String,
@@ -18,7 +19,6 @@ const userScheme =
     role: {
         type: String,
         enum: ['user', 'admin', 'superadmin'],
-        required: true
     }
 }
 
