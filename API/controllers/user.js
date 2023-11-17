@@ -8,13 +8,13 @@ const query = util.promisify(db.query).bind(db);
 const { bodyParser } = require('../lib/bodyParse');
 const { validateUser } = require('../models/users');
 
-require('dotenv').config();
+const SECRET = require('../config');
 const jwt = require('jsonwebtoken');
 //para token
-const secretKey = process.env.SECRETKEY;
+const secretKey = SECRET.SECRETKEY;
 
 //para encriptado
-const claveSecret = process.env.CLAVE_ENCRIPTADO;
+const claveSecret = SECRET.CLAVE_ENCRIPTADO;
 
 const authenticateUser = async (req, res) => {
     try {
@@ -23,7 +23,7 @@ const authenticateUser = async (req, res) => {
         const username = req.body.user;
 
 
-        const sql = 'SELECT id, name, role, password FROM users WHERE name = ? LIMIT 1';
+        const sql = 'SELECT id, name, role, password FROM users WHERE user = ? LIMIT 1';
         const user = (await query(sql, [username]))[0];
 
         if (user) {
@@ -61,7 +61,7 @@ const getUsers = async (req, res) => {
             return { ...user, email: decryptedEmail };
         });
 
-        //console.log(results);
+
         const jsonData = JSON.stringify(resultsWithDecryptedEmail);
         sendResponse(res, 200, 'application/json', jsonData);
     } catch (err) {
@@ -170,7 +170,7 @@ const createUser = async (req, res) => {
         const encryptedEmail = encryptData(newUser.email, claveSecret);
         const encryptedPhone = encryptData(newUser.phone_number, claveSecret);
         const hashedPassword = await bcrypt.hash(newUser.password, 12);
-        const query = 'INSERT INTO users (name, user, password, email, phone_number) VALUES (?, ?, ?, ?, ?)';
+        const query = 'INSERT INTO users (name, user, password, email, phone_number, role) VALUES (?, ?, ?, ?, ?, ?)';
 
         if (newUser.role === null || newUser.role === undefined) {
             newUser.role = 'user';
@@ -182,7 +182,8 @@ const createUser = async (req, res) => {
             newUser.user,
             hashedPassword,
             encryptedEmail,
-            encryptedPhone
+            encryptedPhone,
+            newUser.role
         ];
 
         db.query(query, values, (err, result) => {
@@ -204,18 +205,34 @@ const sendResponse = (res, status, contentType, body) => {
 }
 
 function encryptData(data, secretKey) {
-    const cipher = crypto.createCipher('aes-256-cbc', secretKey);
+    // Generar un IV aleatorio
+    const iv = crypto.randomBytes(16); 
+
+    const cipher = crypto.createCipheriv('aes-256-cbc', secretKey, iv);
+
     let encryptedData = cipher.update(data, 'utf8', 'hex');
     encryptedData += cipher.final('hex');
-    return encryptedData;
-};
+
+    const result = iv.toString('hex') + encryptedData;
+
+    return result;
+}
 
 function decryptData(encryptedData, secretKey) {
-    const decipher = crypto.createDecipher('aes-256-cbc', secretKey);
-    let decryptedData = decipher.update(encryptedData, 'hex', 'utf8');
+    // Extraer el IV del texto cifrado
+    const ivLength = 32; 
+    const iv = Buffer.from(encryptedData.slice(0, ivLength), 'hex');
+    const encryptedText = encryptedData.slice(ivLength);
+
+    const decipher = crypto.createDecipheriv('aes-256-cbc', secretKey, iv);
+
+    let decryptedData = decipher.update(encryptedText, 'hex', 'utf8');
     decryptedData += decipher.final('utf8');
+
     return decryptedData;
 }
+
+
 
 const handleServerError = (res, error) => {
     console.error(error);

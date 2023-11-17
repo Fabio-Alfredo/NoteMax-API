@@ -7,8 +7,8 @@ const { bodyParser } = require('../lib/bodyParse');
 const { validateNotes } = require('../models/notes');
 
 //clave de encriptacion
-require('dotenv').config();
-const claveSecret = process.env.CLAVE_ENCRIPTADO;
+const SECRET = require('../config');
+const claveSecret = SECRET.CLAVE_ENCRIPTADO;
 
 const createNote = async (req, res) => {
     try {
@@ -203,14 +203,14 @@ const getNotesExiting = async (req, res) => {
 
 
 function encryptData(data, claveSecret) {
-    const cipher = crypto.createCipher('aes-256-cbc', claveSecret);
+    const cipher = crypto.createCipheriv('aes-256-cbc', claveSecret);
     let encryptedData = cipher.update(data, 'utf8', 'hex');
     encryptedData += cipher.final('hex');
     return encryptedData;
 }
 
 function decryptData(encryptedData, claveSecret) {
-    const decipher = crypto.createDecipher('aes-256-cbc', claveSecret);
+    const decipher = crypto.createCipheriv('aes-256-cbc', claveSecret);
     let decryptedData = decipher.update(encryptedData, 'hex', 'utf8');
     decryptedData += decipher.final('utf8');
     return decryptedData;

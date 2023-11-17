@@ -1,10 +1,11 @@
 const mysql = require('mysql');
+const SECRET = require('../config');
 
 const conection = mysql.createConnection({
-    host: 'localhost',
-    user: 'superAdmin',
-    password: 'RoblesFabioElisaErniMiguel',
-    database: 'notas'
+    host: SECRET.HOST,
+    user: SECRET.USER,
+    password: SECRET.PASSWORD,
+    database: SECRET.DATABASE
 });
 
 conection.connect((err) => {

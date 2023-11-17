@@ -2,8 +2,10 @@ const http = require('http');
 const routeUser = require('./routes/users');
 const routeNotes = require('./routes/notes');
 const jwt = require('jsonwebtoken');
-const secretKey = 'fabioalfredo';
-require('dotenv').config();
+
+const SECRET = require('./config');
+//para token
+const secretKey = SECRET.SECRETKEY;
 
 const server = http.createServer((req, res) => {
 
@@ -167,7 +169,7 @@ const usersRoles=(req, res, routeFunction)=>{
     }
 }
 
-const port = process.env.PORT;
+const port = SECRET.PORT;
 
 server.listen(port, () => {
     console.log(`El servidor esta corriendo en el puerto ${port}`)
