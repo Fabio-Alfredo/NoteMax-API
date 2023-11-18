@@ -210,10 +210,16 @@ function encryptData(data, claveSecret) {
     return result;
 }
 
-function decryptData(encryptedData, claveSecret, iv) {
-    const decipher = crypto.createDecipheriv('aes-256-cbc', claveSecret, Buffer.from(iv, 'hex'));
-    let decryptedData = decipher.update(encryptedData, 'hex', 'utf8');
+function decryptData(encryptedData, claveSecret) {
+    const ivLength = 32;
+    const iv = Buffer.from(encryptedData.slice(0, ivLength), 'hex');
+    const encryptedText = encryptedData.slice(ivLength);
+
+    const decipher = crypto.createDecipheriv('aes-256-cbc', claveSecret, iv);
+
+    let decryptedData = decipher.update(encryptedText, 'hex', 'utf8');
     decryptedData += decipher.final('utf8');
+
     return decryptedData;
 }
 
