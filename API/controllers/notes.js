@@ -19,7 +19,7 @@ const createNote = async (req, res) => {
         const userExists = await userExistsWithId(userId);
 
         if (!userExists) {
-            sendResponse(res, 404, 'text/plain', 'El usuario con user_id no existe');
+            sendResponse(res, 404, 'application/json', 'El usuario con user_id no existe');
             return;
         }
 
@@ -48,7 +48,7 @@ const createNote = async (req, res) => {
             if (err) {
                 handleServerError(res, err);
             } else {
-                sendResponse(res, 200, 'text/plain', 'Nota creada exitosamente');
+                sendResponse(res, 200, 'application/json', JSON.stringify('Nota creada exitosamente'));
             }
         });
     } catch (err) {
@@ -66,11 +66,11 @@ const deleteNote = async (req, res) => {
         const existingNote = await query(checkNoteExistenceSQL, [id]);
 
         if (existingNote.length === 0) {
-            sendResponse(res, 404, 'text/plain', 'La nota no existe');
+            sendResponse(res, 404, 'application/json', 'La nota no existe');
         } else {
             const deleteNoteSQL = `DELETE FROM notes WHERE id = ?`;
             await query(deleteNoteSQL, [id]);
-            sendResponse(res, 200, 'text/plain', 'La nota ha sido eliminada exitosamente');
+            sendResponse(res, 200, 'application/json', 'La nota ha sido eliminada exitosamente');
         }
     } catch (err) {
         handleServerError(res, err);
@@ -96,7 +96,7 @@ const getNotes = async (req, res) => {
         if (resultsWithDecryptedData.length > 0) {
             sendResponse(res, 200, 'application/json', JSON.stringify(resultsWithDecryptedData));
         } else {
-            sendResponse(res, 404, 'text/plain', 'Sin notas creadas');
+            sendResponse(res, 404, 'application/json', 'Sin notas creadas');
         }
     } catch (err) {
         handleServerError(res, err);
@@ -111,7 +111,7 @@ const getNotesUser = async (req, res) => {
         const userExists = await userExistsWithId(userId);
 
         if (!userExists) {
-            sendResponse(res, 404, 'text/plain', 'El usuario no existe');
+            sendResponse(res, 404, 'application/json', 'El usuario no existe');
             return;
         }
 
@@ -148,14 +148,14 @@ const getNotesType = async (req, res) => {
         const validCategories = ['draft', 'math', 'social', 'friends'];
 
         if (!validCategories.includes(category)) {
-            sendResponse(res, 400, 'text/plain', 'Categoría no válida');
+            sendResponse(res, 400, 'application/json', 'Categoría no válida');
             return;
         }
 
         const userExists = await userExistsWithId(userId);
 
         if (!userExists) {
-            sendResponse(res, 404, 'text/plain', 'El usuario no existe');
+            sendResponse(res, 404, 'application/json', 'El usuario no existe');
             return;
         }
 
@@ -175,7 +175,7 @@ const getNotesType = async (req, res) => {
         if (resultsWithDecryptedData.length > 0) {
             sendResponse(res, 200, 'application/json', JSON.stringify(resultsWithDecryptedData));
         } else {
-            sendResponse(res, 404, 'text/plain', 'Categoría vacía');
+            sendResponse(res, 404, 'application/json', Json.stringify('Categoría vacía'));
         }
     } catch (err) {
         handleServerError(req, err);
@@ -230,7 +230,7 @@ const sendResponse = (res, status, contentType, body) => {
 
 const handleServerError = (res, error) => {
     console.error(error);
-    sendResponse(res, 500, 'text/plain', 'Error interno del servidor');
+    sendResponse(res, 500, 'application/json', 'Error interno del servidor');
 };
 
 module.exports = { getNotesUser, createNote, getNotesType, getNotes, deleteNote };

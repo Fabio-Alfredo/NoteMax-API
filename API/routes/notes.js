@@ -43,7 +43,7 @@ const getNotesTypeRoute = (req, res) => {
 
 
 function handleMethodNotAllowed(req, res) {
-    res.writeHead(405, { 'Content-Type': 'text/plain' });
+    res.writeHead(405, { 'Content-Type': 'application/json' });
     res.end('Method Not Allowed');
 };
 
