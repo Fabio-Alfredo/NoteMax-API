@@ -7,6 +7,11 @@ const SECRET = require('./config');
 //para token
 const secretKey = SECRET.SECRETKEY;
 
+const requestTracker = {};
+const rateLimit = 5;
+const rateLimitWindow = 60 * 1000;
+
+
 const server = http.createServer((req, res) => {
 
     const { url, method } = req;
@@ -17,15 +22,15 @@ const server = http.createServer((req, res) => {
 
     const verificarToken = (req, res, next) => {
         let token = req.headers.authorization;
-    
+
         if (!token) {
             res.writeHead(401, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ message: 'Token no proporcionado' }));
         } else {
             if (token.startsWith('Bearer')) {
-                token = token.slice(7); 
+                token = token.slice(7);
             }
-    
+
             jwt.verify(token, secretKey, (err, decoded) => {
                 if (err) {
                     res.writeHead(401, { 'Content-Type': 'application/json' });
@@ -37,10 +42,31 @@ const server = http.createServer((req, res) => {
             });
         }
     };
-    
+
+    const applyRateLimit = (clientIP) => {
+        if (!requestTracker[clientIP]) {
+            requestTracker[clientIP] = [];
+        }
+
+        const currentTime = new Date().getTime();
+        const recentRequests = requestTracker[clientIP].filter((time) => currentTime - time < rateLimitWindow);
+
+        if (recentRequests.length >= rateLimit) {
+            res.writeHead(429, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ message: 'Rate limit exceeded' }));
+            return false;
+        }
+
+        requestTracker[clientIP].push(currentTime);
+        requestTracker[clientIP] = requestTracker[clientIP].filter((time) => currentTime - time < rateLimitWindow);
+
+        return true;
+    };
+
+
     switch (method) {
         case 'OPTIONS':
-           {
+            {
                 res.writeHead(200);
                 res.end();
             }
@@ -54,25 +80,34 @@ const server = http.createServer((req, res) => {
             //ruta para obtener todos los usuario
             else if (url === '/api/users') {
                 verificarToken(req, res, () => {
-                    adminSuperadmin(req, res, routeUser.usersRoute);
+                    if (applyRateLimit(req.socket.remoteAddress)) {
+                        adminSuperadmin(req, res, routeUser.usersRoute);
+                    }
                 });
             }
             //ruta para traer usuario por id
             else if (url.startsWith('/api/users?')) {
-                verificarToken(req, res, ()=>{
-                    adminSuperadmin(req, res, routeUser.usersIdRoute)
+                verificarToken(req, res, () => {
+                    if (applyRateLimit(req.socket.remoteAddress)) {
+                        adminSuperadmin(req, res, routeUser.usersIdRoute)
+                    }
+
                 });
             }
             // ruta para traer todas las notas del usuario
             else if (url === ('/api/notes')) {
-                verificarToken(req, res, ()=>{
-                    usersRoles(req, res, routeNotes.getNotesUserRoute)
+                verificarToken(req, res, () => {
+                    if (req.socket.remoteAddress) {
+                        usersRoles(req, res, routeNotes.getNotesUserRoute)
+                    }
                 });
             }
             //ruta para obtener las notas por categoria
             else if (url.startsWith('/api/notes?')) {
-                verificarToken(req, res, ()=>{
-                    usersRoles(req, res, routeNotes.getNotesTypeRoute)
+                verificarToken(req, res, () => {
+                    if (req.socket.remoteAddress) {
+                        usersRoles(req, res, routeNotes.getNotesTypeRoute)
+                    }
                 });
             }
             else {
@@ -84,17 +119,23 @@ const server = http.createServer((req, res) => {
         case 'POST':
             //ruta para creacion de usuario
             if (url.startsWith('/api/users')) {
-                routeUser.createUserRoute(req, res);
+                if (req.socket.remoteAddress) {
+                    routeUser.createUserRoute(req, res);
+                }
             }
             //ruta para crear notas 
             else if (url.startsWith('/api/notes')) {
-                verificarToken(req, res, ()=>{
+                verificarToken(req, res, () => {
+                    if(req.socket.remoteAddress){
                     usersRoles(req, res, routeNotes.createNoteRoute)
+                }
                 });
             }
             //ruta para iniciar sesion y  obtener token
             else if (url === '/api/login') {
+                if(req.socket.remoteAddress){
                 routeUser.loginRoute(req, res);
+            }
             }
             else {
                 res.writeHead(404, { "Content-Type": "text/plain" });
@@ -105,13 +146,13 @@ const server = http.createServer((req, res) => {
         case 'DELETE':
             // ruta para eliminar una nota
             if (url.startsWith('/api/notes')) {
-                verificarToken(req, res, ()=>{
+                verificarToken(req, res, () => {
                     usersRoles(req, res, routeNotes.getDeleteNoteRoute)
                 });
             }
             //ruta para eliminar usuario
-            else if(url.startsWith('/api/users?')){
-                verificarToken(req, res, ()=>{
+            else if (url.startsWith('/api/users?')) {
+                verificarToken(req, res, () => {
                     Superadmin(req, res, routeUser.deleteUserRoute)
                 });
             }
@@ -124,7 +165,7 @@ const server = http.createServer((req, res) => {
         case 'PATCH':
             //ruta para cambiar el rol de un usuario
             if (url.startsWith('/api/users')) {
-                verificarToken(req, res, ()=>{
+                verificarToken(req, res, () => {
                     Superadmin(req, res, routeUser.editUserRout)
                 });
             } else {
@@ -141,30 +182,30 @@ const server = http.createServer((req, res) => {
     }
 });
 
-const adminSuperadmin=(req, res, routeFunction)=>{
-    if(req.user.role === "user"){
+const adminSuperadmin = (req, res, routeFunction) => {
+    if (req.user.role === "user") {
         res.writeHead(403, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ message: 'Acceso prohibido para usuarios con rol "usuario"' }));
-    }else{
+    } else {
         routeFunction(req, res);
     }
 };
 
-const Superadmin=(req, res, routeFunction)=>{
-    if(req.user.role != "superadmin"){
+const Superadmin = (req, res, routeFunction) => {
+    if (req.user.role != "superadmin") {
         res.writeHead(403, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ message: 'Acceso prohibido para usuarios con rol "usuario"' }));
-    }else{
+    } else {
         routeFunction(req, res);
     }
 };
 
 
-const usersRoles=(req, res, routeFunction)=>{
-    if(!req.user.role){
+const usersRoles = (req, res, routeFunction) => {
+    if (!req.user.role) {
         res.writeHead(403, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ message: 'Acceso prohibido para usuarios con rol "usuario"' }));
-    }else{
+    } else {
         routeFunction(req, res);
     }
 }
