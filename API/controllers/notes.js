@@ -35,10 +35,9 @@ const createNote = async (req, res) => {
         const encryptedTitle = encryptData(newNote.tittle, claveSecret);
         const encryptedContent = encryptData(newNote.content, claveSecret);
 
-        const query = 'INSERT INTO notes (id, user_id, tittle, content, categories) VALUES (?, ?, ?, ?, ?)';
+        const query = 'INSERT INTO notes (user_id, tittle, content, categories) VALUES ( ?, ?, ?, ?)';
 
         const values = [
-            newNote.id,
             userId,
             encryptedTitle,
             encryptedContent,
@@ -203,14 +202,16 @@ const getNotesExiting = async (req, res) => {
 
 
 function encryptData(data, claveSecret) {
-    const cipher = crypto.createCipheriv('aes-256-cbc', claveSecret);
+    const iv = crypto.randomBytes(16); // Genera un vector de inicialización aleatorio
+    const cipher = crypto.createCipheriv('aes-256-cbc', claveSecret, iv);
     let encryptedData = cipher.update(data, 'utf8', 'hex');
     encryptedData += cipher.final('hex');
-    return encryptedData;
+    const result = iv.toString('hex') + encryptedData
+    return result;
 }
 
-function decryptData(encryptedData, claveSecret) {
-    const decipher = crypto.createCipheriv('aes-256-cbc', claveSecret);
+function decryptData(encryptedData, claveSecret, iv) {
+    const decipher = crypto.createDecipheriv('aes-256-cbc', claveSecret, Buffer.from(iv, 'hex'));
     let decryptedData = decipher.update(encryptedData, 'hex', 'utf8');
     decryptedData += decipher.final('utf8');
     return decryptedData;
