@@ -22,6 +22,11 @@ const authenticateUser = async (req, res) => {
         const plainTextPassword = req.body.password;
         const username = req.body.user;
 
+        if (!username || !plainTextPassword) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ message: 'Invalid input' }));
+            return;
+        }
 
         const sql = 'SELECT id, name, role, password FROM users WHERE user = ? LIMIT 1';
         const user = (await query(sql, [username]))[0];
@@ -161,6 +166,7 @@ const createUser = async (req, res) => {
 
         const existingUsers = await getUsersExiting(req, res);
         const validationResult = validateUser(newUser, existingUsers);
+
         if (!validationResult.isValid) {
             sendResponse(res, 400, 'application/json', JSON.stringify({ error: validationResult.error }));
             return;
@@ -169,10 +175,15 @@ const createUser = async (req, res) => {
 
         const encryptedEmail = encryptData(newUser.email, claveSecret);
         const encryptedPhone = encryptData(newUser.phone_number, claveSecret);
+        
+        if (!newUser.password) {
+            sendResponse(res, 400, 'application/json', JSON.stringify({ error: 'Password is required' }));
+            return;
+        }
         const hashedPassword = await bcrypt.hash(newUser.password, 12);
         const query = 'INSERT INTO users (name, user, password, email, phone_number, role) VALUES (?, ?, ?, ?, ?, ?)';
 
-        if (newUser.role === null || newUser.role === undefined) {
+        if (!newUser.role || (newUser.role !== 'admin' && newUser.role !== 'user')) {
             newUser.role = 'user';
         }
 
@@ -206,7 +217,7 @@ const sendResponse = (res, status, contentType, body) => {
 
 function encryptData(data, secretKey) {
     // Generar un IV aleatorio
-    const iv = crypto.randomBytes(16); 
+    const iv = crypto.randomBytes(16);
 
     const cipher = crypto.createCipheriv('aes-256-cbc', secretKey, iv);
 
@@ -220,7 +231,7 @@ function encryptData(data, secretKey) {
 
 function decryptData(encryptedData, secretKey) {
     // Extraer el IV del texto cifrado
-    const ivLength = 32; 
+    const ivLength = 32;
     const iv = Buffer.from(encryptedData.slice(0, ivLength), 'hex');
     const encryptedText = encryptedData.slice(ivLength);
 
