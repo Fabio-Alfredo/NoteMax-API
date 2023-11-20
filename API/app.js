@@ -173,7 +173,7 @@ const server = http.createServer((req, res) => {
             //ruta para cambiar el rol de un usuario
             if (url.startsWith('/api/users')) {
                 verificarToken(req, res, () => {
-                    Superadmin(req, res, routeUser.editUserRout)
+                    adminSuperadmin(req, res, routeUser.editUserRout)
                 });
             } else {
                 res.writeHead(404, { "Content-Type": "text/plain" });
