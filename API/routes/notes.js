@@ -17,6 +17,7 @@ const getNotesRoute = (req, res) => {
     }
 }
 
+
 const getDeleteNoteRoute=(req, res)=>{
     if(req.method === "DELETE"){
         notesController.deleteNote(req, res);

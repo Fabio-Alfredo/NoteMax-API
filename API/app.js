@@ -110,6 +110,13 @@ const server = http.createServer((req, res) => {
                     }
                 });
             }
+            else if(url.startsWith('/api/ad/notes')){
+                verificarToken(req, res,()=>{
+                    if(req.socket.remoteAddress){
+                        adminSuperadmin(req, res, routeNotes.getNotesRoute);
+                    }
+                })
+            }
             else {
                 res.writeHead(404, { "Content-Type": "text/plain" });
                 res.write("404 Not Found");
@@ -153,7 +160,7 @@ const server = http.createServer((req, res) => {
             //ruta para eliminar usuario
             else if (url.startsWith('/api/users?')) {
                 verificarToken(req, res, () => {
-                    Superadmin(req, res, routeUser.deleteUserRoute)
+                    adminSuperadmin(req, res, routeUser.deleteUserRoute)
                 });
             }
             else {

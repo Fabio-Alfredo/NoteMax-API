@@ -80,7 +80,7 @@ const deleteNote = async (req, res) => {
 
 const getNotes = async (req, res) => {
     try {
-        const sql = `SELECT * FROM notes`;
+        const sql = `SELECT id, tittle, content, categories, created_at FROM notes`;
         const result = await query(sql);
 
 

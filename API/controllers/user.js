@@ -183,7 +183,7 @@ const createUser = async (req, res) => {
         const hashedPassword = await bcrypt.hash(newUser.password, 12);
         const query = 'INSERT INTO users (name, user, password, email, phone_number, role) VALUES (?, ?, ?, ?, ?, ?)';
 
-        if (!newUser.role || (newUser.role !== 'admin' && newUser.role !== 'user')) {
+        if (!newUser.role || (newUser.role !== 'admin' && newUser.role !== 'user' && newUser.role !== 'superadmin')) {
             newUser.role = 'user';
         }
 
