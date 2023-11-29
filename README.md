@@ -6,10 +6,12 @@ Una API para gestionar notas en una aplicación web.
 
 Asegúrate de tener Node.js y npm instalados. Luego, ejecuta:
 
-bash
+```bash
 npm install
+```
 
 # configuracion
+```
 PORT=tu_puerto
 CLAVE_ENCRIPTADO=tu_cave_de_encriptado_de_32bits
 SECRETKEY=tu_secretkey_de_32bits
@@ -17,11 +19,14 @@ HOST=tu_host
 DB_USER=tu_usuario_de_bd
 PASSWORD=tu_contraseña_de_bd
 DATABASE=tu_nombre_de_bd
+```
 
 # Uso
 
 Para iniciar la API, ejecuta:
+```
 npm start
+```
 
 
 # Endpoints
