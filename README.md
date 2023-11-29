@@ -25,7 +25,7 @@ DATABASE=tu_nombre_de_bd
 
 Para iniciar la API, ejecuta:
 ```
-npm start
+npm run dev
 ```
 
 
