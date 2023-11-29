@@ -1,9 +1,60 @@
 const url = require('url');
 const db = require('../conecction/mysql');
+const crypto = require('crypto');
 const util = require('util');
 const query = util.promisify(db.query).bind(db);
 const { bodyParser } = require('../lib/bodyParse');
-const { validateNotes } = require('../models/notes')
+const { validateNotes } = require('../models/notes');
+
+//clave de encriptacion
+const SECRET = require('../config');
+const claveSecret = SECRET.CLAVE_ENCRIPTADO;
+
+const createNote = async (req, res) => {
+    try {
+        await bodyParser(req);
+        const newNote = req.body;
+        const userId = req.user.id;
+
+        const userExists = await userExistsWithId(userId);
+
+        if (!userExists) {
+            sendResponse(res, 404, 'application/json', 'El usuario con user_id no existe');
+            return;
+        }
+
+        const existingNotes = await getNotesExiting(req, res);
+        const validationResult = validateNotes(newNote, existingNotes);
+        if (!validationResult.isValid) {
+            sendResponse(res, 400, 'application/json', JSON.stringify({ error: validationResult.error }));
+            return;
+        }
+
+
+        // Encripta el título y el contenido
+        const encryptedTitle = encryptData(newNote.tittle, claveSecret);
+        const encryptedContent = encryptData(newNote.content, claveSecret);
+
+        const query = 'INSERT INTO notes (user_id, tittle, content, categories) VALUES ( ?, ?, ?, ?)';
+
+        const values = [
+            userId,
+            encryptedTitle,
+            encryptedContent,
+            newNote.categories
+        ];
+
+        db.query(query, values, (err, result) => {
+            if (err) {
+                handleServerError(res, err);
+            } else {
+                sendResponse(res, 200, 'application/json', JSON.stringify('Nota creada exitosamente'));
+            }
+        });
+    } catch (err) {
+        handleServerError(res, err);
+    }
+};
 
 
 const deleteNote = async (req, res) => {
@@ -15,11 +66,11 @@ const deleteNote = async (req, res) => {
         const existingNote = await query(checkNoteExistenceSQL, [id]);
 
         if (existingNote.length === 0) {
-            sendResponse(res, 404, 'text/plain', 'La nota no existe');
+            sendResponse(res, 404, 'application/json', 'La nota no existe');
         } else {
             const deleteNoteSQL = `DELETE FROM notes WHERE id = ?`;
             await query(deleteNoteSQL, [id]);
-            sendResponse(res, 200, 'text/plain', 'La nota ha sido eliminada exitosamente');
+            sendResponse(res, 200, 'application/json', 'La nota ha sido eliminada exitosamente');
         }
     } catch (err) {
         handleServerError(res, err);
@@ -29,14 +80,23 @@ const deleteNote = async (req, res) => {
 
 const getNotes = async (req, res) => {
     try {
-
-        const sql = `SELECT * FROM notes`;
+        const sql = `SELECT id, tittle, content, categories, created_at FROM notes`;
         const result = await query(sql);
 
-        if (result.length > 0) {
-            sendResponse(res, 200, 'application/json', JSON.stringify(result));
+
+        // Desencripta el título y el contenido en cada resultado
+        const resultsWithDecryptedData = result.map(note => {
+            const encryptedTitle = note.tittle;
+            const encryptedContent = note.content;
+            const decryptedTitle = decryptData(encryptedTitle, claveSecret);
+            const decryptedContent = decryptData(encryptedContent, claveSecret);
+            return { ...note, tittle: decryptedTitle, content: decryptedContent };
+        });
+
+        if (resultsWithDecryptedData.length > 0) {
+            sendResponse(res, 200, 'application/json', JSON.stringify(resultsWithDecryptedData));
         } else {
-            sendResponse(res, 404, 'text/plain', 'Sin notas creadas');
+            sendResponse(res, 404, 'application/json', 'Sin notas creadas');
         }
     } catch (err) {
         handleServerError(res, err);
@@ -44,27 +104,35 @@ const getNotes = async (req, res) => {
 };
 
 
-
 const getNotesUser = async (req, res) => {
     try {
-        const urlObj = url.parse(req.url, true);
-        const userId = urlObj.query.user_id;
+        const userId = req.user.id;
 
         const userExists = await userExistsWithId(userId);
 
         if (!userExists) {
-            sendResponse(res, 404, 'text/plain', 'El usuario  no existe');
+            sendResponse(res, 404, 'application/json', 'El usuario no existe');
             return;
         }
 
-        const sql = `SELECT * FROM notes WHERE user_id = ?`;
-        const value = [userId]
+        const sql = `SELECT id, tittle, content, categories, created_at FROM notes WHERE user_id = ?`;
+        const value = [userId];
         const result = await query(sql, value);
 
-        if (result.length > 0) {
-            sendResponse(res, 200, 'application/json', JSON.stringify(result));
+
+        // Desencripta el título y el contenido en cada resultado
+        const resultsWithDecryptedData = result.map(note => {
+            const encryptedTitle = note.tittle;
+            const encryptedContent = note.content;
+            const decryptedTitle = decryptData(encryptedTitle, claveSecret);
+            const decryptedContent = decryptData(encryptedContent, claveSecret);
+            return { ...note, tittle: decryptedTitle, content: decryptedContent };
+        });
+
+        if (resultsWithDecryptedData.length > 0) {
+            sendResponse(res, 200, 'application/json', JSON.stringify(resultsWithDecryptedData));
         } else {
-            sendResponse(res, 404, 'text/plain', 'Sin notas creadas');
+            sendResponse(res, 200, 'application/json', JSON.stringify([]));
         }
     } catch (err) {
         handleServerError(res, err);
@@ -73,36 +141,41 @@ const getNotesUser = async (req, res) => {
 
 const getNotesType = async (req, res) => {
     try {
-        const urlObj = url.parse(req.url, true);
-        const userId = urlObj.query.user_id;
-        const category = urlObj.query.category;
+        const userId = req.user.id;
+        const parsedUrl = url.parse(req.url, true);
+        const category = parsedUrl.query.category;
 
         const validCategories = ['draft', 'math', 'social', 'friends'];
 
         if (!validCategories.includes(category)) {
-            sendResponse(res, 400, 'text/plain', 'Categoría no válida');
+            sendResponse(res, 400, 'application/json', 'Categoría no válida');
             return;
         }
 
         const userExists = await userExistsWithId(userId);
 
         if (!userExists) {
-            sendResponse(res, 404, 'text/plain', 'El usuario  no existe');
+            sendResponse(res, 404, 'application/json', 'El usuario no existe');
             return;
         }
-
-        console.log("userId:", userId);
-        console.log("category:", category);
-
 
         const sql = 'SELECT * FROM notes WHERE user_id = ? AND categories = ?';
         const values = [userId, category];
         const result = await query(sql, values);
 
-        if (result.length > 0) {
-            sendResponse(res, 200, 'application/json', JSON.stringify(result));
+        // Desencripta el título y el contenido en cada resultado
+        const resultsWithDecryptedData = result.map(note => {
+            const encryptedTitle = note.tittle;
+            const encryptedContent = note.content;
+            const decryptedTitle = decryptData(encryptedTitle, claveSecret);
+            const decryptedContent = decryptData(encryptedContent, claveSecret);
+            return { ...note, tittle: decryptedTitle, content: decryptedContent };
+        });
+
+        if (resultsWithDecryptedData.length > 0) {
+            sendResponse(res, 200, 'application/json', JSON.stringify(resultsWithDecryptedData));
         } else {
-            sendResponse(res, 404, 'text/plain', 'Categoria vacia');
+            sendResponse(res, 404, 'application/json', Json.stringify('Categoría vacía'));
         }
     } catch (err) {
         handleServerError(req, err);
@@ -128,48 +201,27 @@ const getNotesExiting = async (req, res) => {
 };
 
 
-const createNote = async (req, res) => {
+function encryptData(data, claveSecret) {
+    const iv = crypto.randomBytes(16); // Genera un vector de inicialización aleatorio
+    const cipher = crypto.createCipheriv('aes-256-cbc', claveSecret, iv);
+    let encryptedData = cipher.update(data, 'utf8', 'hex');
+    encryptedData += cipher.final('hex');
+    const result = iv.toString('hex') + encryptedData
+    return result;
+}
 
-    try {
-        await bodyParser(req);
-        const newNote = req.body;
+function decryptData(encryptedData, claveSecret) {
+    const ivLength = 32;
+    const iv = Buffer.from(encryptedData.slice(0, ivLength), 'hex');
+    const encryptedText = encryptedData.slice(ivLength);
 
-        const userExists = await userExistsWithId(newNote.user_id);
+    const decipher = crypto.createDecipheriv('aes-256-cbc', claveSecret, iv);
 
-        if (!userExists) {
-            sendResponse(res, 404, 'text/plain', 'El usuario con user_id no existe');
-            return;
-        }
+    let decryptedData = decipher.update(encryptedText, 'hex', 'utf8');
+    decryptedData += decipher.final('utf8');
 
-        const existingNotes = await getNotesExiting(req, res);
-        const validationResult = validateNotes(newNote, existingNotes);
-        if (!validationResult.isValid) {
-            sendResponse(res, 400, 'application/json', JSON.stringify({ error: validationResult.error }));
-            return;
-        }
-
-        const query = 'INSERT INTO notes (id, user_id, tittle, content, categories) VALUES (?, ?, ?, ?, ?)';
-
-        const values = [
-            newNote.id,
-            newNote.user_id,
-            newNote.tittle,
-            newNote.content,
-            newNote.categories
-        ];
-
-        db.query(query, values, (err, result) => {
-            if (err) {
-                handleServerError(res, err);
-            } else {
-                sendResponse(res, 200, 'text/plain', 'Nota creado exitosamente');
-            }
-        });
-
-    } catch (err) {
-        handleServerError(res, err);
-    }
-};
+    return decryptedData;
+}
 
 const sendResponse = (res, status, contentType, body) => {
     res.writeHead(status, { 'Content-Type': contentType });
@@ -178,7 +230,7 @@ const sendResponse = (res, status, contentType, body) => {
 
 const handleServerError = (res, error) => {
     console.error(error);
-    sendResponse(res, 500, 'text/plain', 'Error interno del servidor');
+    sendResponse(res, 500, 'application/json', 'Error interno del servidor');
 };
 
 module.exports = { getNotesUser, createNote, getNotesType, getNotes, deleteNote };

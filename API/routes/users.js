@@ -1,7 +1,7 @@
 const usersController = require('../controllers/user');
 
 function handleMethodNotAllowed(req, res) {
-    res.writeHead(405, { 'Content-Type': 'text/plain' });
+    res.writeHead(405, { 'Content-Type': 'application/json' });
     res.end('Method Not Allowed');
 }
 
@@ -13,10 +13,26 @@ const usersRoute = (req, res) => {
     }
 };
 
-const editUserRout=(req, res)=>{
-    if(req.method === "PATCH"){
-        usersController.changeUserRole(req, res);
+const deleteUserRoute=(req, res)=>{
+    if(req.method === "DELETE"){
+        usersController.deleteUser(req, res);
     }else{
+        handleMethodNotAllowed(req, res);
+    }
+}
+
+const editUserRout = (req, res) => {
+    if (req.method === "PATCH") {
+        usersController.changeUserRole(req, res);
+    } else {
+        handleMethodNotAllowed(req, res);
+    }
+};
+
+const loginRoute = (req, res) => {
+    if (req.method === "POST") {
+        usersController.authenticateUser(req, res);
+    } else {
         handleMethodNotAllowed(req, res);
     }
 }
@@ -38,4 +54,4 @@ const createUserRoute = (req, res) => {
 }
 
 
-module.exports = { usersRoute, usersIdRoute, createUserRoute, editUserRout };
+module.exports = { usersRoute, usersIdRoute, createUserRoute, editUserRout, loginRoute, deleteUserRoute};

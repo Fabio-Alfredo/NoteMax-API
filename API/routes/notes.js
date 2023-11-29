@@ -17,6 +17,7 @@ const getNotesRoute = (req, res) => {
     }
 }
 
+
 const getDeleteNoteRoute=(req, res)=>{
     if(req.method === "DELETE"){
         notesController.deleteNote(req, res);
@@ -43,7 +44,7 @@ const getNotesTypeRoute = (req, res) => {
 
 
 function handleMethodNotAllowed(req, res) {
-    res.writeHead(405, { 'Content-Type': 'text/plain' });
+    res.writeHead(405, { 'Content-Type': 'application/json' });
     res.end('Method Not Allowed');
 };
 
