@@ -1,29 +1,29 @@
-# NoteMax-API
+#NoteMax-API
 
-Una API para gestionar notas en una aplicación web.
+An API to manage notes in a web application.
 
-## Instalación
+## Facility
 
-Asegúrate de tener Node.js y npm instalados. Luego, ejecuta:
+Make sure you have Node.js and npm installed. Then, run:
 
 ```bash
 npm install
 ```
 
-# configuracion
+# setting
 ```
-PORT=tu_puerto
-CLAVE_ENCRIPTADO=tu_cave_de_encriptado_de_32bits
-SECRETKEY=tu_secretkey_de_32bits
-HOST=tu_host
-DB_USER=tu_usuario_de_bd
-PASSWORD=tu_contraseña_de_bd
-DATABASE=tu_nombre_de_bd
+PORT=your_port
+ENCRYPTED_KEY=your_32bit_encryption_cave
+SECRETKEY=your_32bit_secretkey
+HOST=your_host
+DB_USER=your_db_user
+PASSWORD=your_bd_password
+DATABASE=your_db_name
 ```
 
-# Uso
+# Use
 
-Para iniciar la API, ejecuta:
+To start the API, run:
 ```
 npm run dev
 ```
@@ -31,57 +31,57 @@ npm run dev
 
 # Endpoints
 
-A continuación se detallan los principales endpoints de la API:
+The main API endpoints are detailed below:
 
-### Obtener todas las notas
+### Get all notes
 
-- **Método:** `GET`
-- **Ruta:** `/api/notes`
-- **Descripción:** Obtiene todas las notas.
+- **Method:** `GET`
+- **Path:** `/api/notes`
+- **Description:** Gets all the notes.
 
-### Obtener una nota por ID
+### Get a note by ID
 
-- **Método:** `GET`
-- **Ruta:** `/api/notes/:id`
-- **Descripción:** Obtiene una nota específica por su ID.
+- **Method:** `GET`
+- **Path:** `/api/notes/:id`
+- **Description:** Gets a specific note for its ID.
 
-### Crear una nueva nota
+### Create a new note
 
-- **Método:** `POST`
-- **Ruta:** `/api/notes`
-- **Descripción:** Crea una nueva nota.
+- **Method:** `POST`
+- **Path:** `/api/notes`
+- **Description:** Create a new note.
 
-### Eliminar una nota
+### Delete a note
 
-- **Método:** `DELETE`
-- **Ruta:** `/api/notes/:id`
-- **Descripción:** Elimina una nota específica por su ID.
+- **Method:** `DELETE`
+- **Path:** `/api/notes/:id`
+- **Description:** Deletes a specific note by its ID.
 
-### Crear un nuevo usuario
+### Create a new user
 
-- **Método:** `POST`
-- **Ruta:** `/api/users`
-- **Descripción:** Crea un nuevo usuario.
+- **Method:** `POST`
+- **Path:** `/api/users`
+- **Description:** Create a new user.
 
-### Iniciar sesión
+### Log in
 
-- **Método:** `POST`
-- **Ruta:** `/api/login`
-- **Descripción:** Inicia sesión y obtén un token de autenticación.
+- **Method:** `POST`
+- **Path:** `/api/login`
+- **Description:** Sign in and get an authentication token.
 
-### Cambiar el rol de un usuario
+### Change a user's role
 
-- **Método:** `PATCH`
-- **Ruta:** `/api/users/:id`
-- **Descripción:** Cambia el rol de un usuario específico.
+- **Method:** `PATCH`
+- **Path:** `/api/users/:id`
+- **Description:** Changes the role of a specific user.
 
-### Eliminar un usuario
+### Delete a user
 
-- **Método:** `DELETE`
-- **Ruta:** `/api/users/:id`
-- **Descripción:** Elimina un usuario específico por su ID.
+- **Method:** `DELETE`
+- **Path:** `/api/users/:id`
+- **Description:** Delete a specific user by their ID.
 
-### Ejemplo de Solicitud (usando cURL)
+### Request Example (using cURL)
 - **curl http://localhost:3000/api/notes**
 
 
