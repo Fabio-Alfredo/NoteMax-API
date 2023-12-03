@@ -1,4 +1,4 @@
-#NoteMax-API
+# NoteMax-API
 
 An API to manage notes in a web application.
 
